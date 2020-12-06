@@ -1,5 +1,6 @@
 import pygame as pg
 import numpy as np
+from random import randrange
 
 
 class TicTacToe:
@@ -7,8 +8,9 @@ class TicTacToe:
     def __init__(self, table_size=3):
         self.table_size = table_size
         self.table = np.zeros(shape=(table_size, table_size), dtype='int')
-        self.table[0] = 1
-        self.table[-1] = 2
+        self.buttons = []
+        # self.table[0] = 1
+        # self.table[-1] = 2
         pg.init()
         self.screen = pg.display.set_mode((800, 600))
         self.clock = pg.time.Clock()
@@ -18,6 +20,7 @@ class TicTacToe:
         self.offset = ((800 - self.width) / 2, (600 - self.height) / 2)
         self.current_player = 2
         self.human_player = 2
+        self.ai_player = 1
         self.board_tiles = []
         self.player_colors = {1: 'red', 2: 'green'}
         self.init_board()
@@ -42,24 +45,120 @@ class TicTacToe:
                 rect = (x, y, self.tile_size, self.tile_size)
                 pg.draw.rect(self.background, 'WHITE', rect, width=1)
 
-    def run(self):
-        game_exit = False
-        while not game_exit:
-            self.draw_board()
-            if self.current_player == 1:
-                # do AI thinking
-                pass
+    def draw_pieces(self):
+        for i in range(self.table_size):
+            for j in range(self.table_size):
+                pos, piece = self.board_tiles[i][j]
+                x, y = pos
+                if piece == 2:
+                    pg.draw.line(self.background, color='WHITE',
+                                 start_pos=(x + self.tile_size / 5, y + self.tile_size / 5),
+                                 end_pos=(
+                                     x + self.tile_size - self.tile_size / 5, y + self.tile_size - self.tile_size / 5),
+                                 width=4)
+                    pg.draw.line(self.background, color='WHITE',
+                                 start_pos=(x - self.tile_size / 5 + self.tile_size, y + self.tile_size / 5),
+                                 end_pos=(
+                                     x + self.tile_size / 5, y + self.tile_size - self.tile_size / 5),
+                                 width=4)
+                elif piece == 1:
+                    pg.draw.ellipse(self.background, color='WHITE',
+                                    rect=((x + self.tile_size / 4, y + self.tile_size / 4),
+                                          (self.tile_size / 2, self.tile_size / 2)), width=4)
+
+    def check_box(self, box_pos, click_pos):
+        x1, y1 = box_pos
+        x2, y2 = x1 + self.tile_size, y1 + self.tile_size
+        x, y = click_pos
+        if x1 < x < x2 and y1 < y < y2:
+            return True
+        else:
+            return False
+
+    def mouse_select(self, pos):
+        for i in range(self.table_size):
+            for j in range(self.table_size):
+                box_pos, piece = self.board_tiles[i][j]
+                if self.check_box(box_pos, pos):
+                    return i, j
+        return None
+
+    def process_click(self, cell):
+        if self.human_player == self.current_player:
+            i, j = cell
+            if self.table[i, j] == 0:
+                self.table[i, j] = self.human_player
+                self.current_player = self.ai_player
+
+    def check_win(self, player):
+        cells = ((0, 0), (0, 1), (0, 2), (1, 0), (2, 0))
+
+        for cell in cells:
+            i, j = cell
+            if (self.table[i] == player).all():
+                return True
+
+            if (self.table.transpose()[j] == player).all():
+                return True
+
+            if (self.table.diagonal() == player).all():
+                return True
+
+            if (np.fliplr(self.table).diagonal() == player).all():
+                return True
+        return False
+    def draw_menu(self):
+
+    def menu(self):
+        while True:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     game_exit = True
                 if event.type == pg.MOUSEBUTTONUP:
                     pos = pg.mouse.get_pos()
                     pos = pos[0] - self.offset[0], pos[1] - self.offset[1]
-                    # cell = self.mouse_select(pos)
-                    # if cell is not None:
-                    #     self.process_click(cell)
-                    #     if self.check_final() != 0:
-                    #         game_exit = True
+                    # click buttons
+            self.screen.fill((60, 70, 90))
+            self.screen.blit(self.background, self.offset)
+            pg.display.flip()
+            self.clock.tick(30)
+
+    def run(self):
+        game_exit = False
+        while not game_exit:
+            self.update_board()
+            self.draw_board()
+            self.draw_pieces()
+            if self.check_win(self.ai_player):
+                print('ai win')
+                break
+            if self.check_win(self.human_player):
+                print('human win')
+                break
+            if self.current_player == self.ai_player:
+                # do AI thinking
+                # self.table[0, 0] = self.ai_player
+                while True:
+                    r_i = randrange(0, self.table_size)
+                    r_j = randrange(0, self.table_size)
+                    if self.table[r_i, r_j] == 0:
+                        self.table[r_i, r_j] = self.ai_player
+                        self.current_player = self.human_player
+                        break
+
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    game_exit = True
+                if event.type == pg.MOUSEBUTTONUP:
+                    pos = pg.mouse.get_pos()
+                    pos = pos[0] - self.offset[0], pos[1] - self.offset[1]
+                    cell = self.mouse_select(pos)
+                    if cell is not None:
+                        # print(cell)
+                        self.process_click(cell)
+
+                        # if self.check_final() != 0:
+                        #     game_exit = True
             self.screen.fill((60, 70, 90))
             self.screen.blit(self.background, self.offset)
             pg.display.flip()
@@ -70,5 +169,6 @@ class TicTacToe:
 def main():
     obj = TicTacToe()
     obj.run()
+
 
 main()
