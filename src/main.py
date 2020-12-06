@@ -2,6 +2,7 @@ import pygame as pg
 import numpy as np
 from random import randrange
 from button import Button
+from minimax import MiniMax, check_end
 
 
 class TicTacToe:
@@ -13,6 +14,7 @@ class TicTacToe:
         # self.table[0] = 1
         # self.table[-1] = 2
         pg.init()
+        self.alg = MiniMax()
         self.smallfont = pg.font.SysFont('Comic Sans MS', 35)
         self.s_width = 800
         self.s_height = 600
@@ -94,24 +96,6 @@ class TicTacToe:
                 self.table[i, j] = self.human_player
                 self.current_player = self.ai_player
 
-    def check_win(self, player):
-        cells = ((0, 0), (0, 1), (0, 2), (1, 0), (2, 0))
-
-        for cell in cells:
-            i, j = cell
-            if (self.table[i] == player).all():
-                return True
-
-            if (self.table.transpose()[j] == player).all():
-                return True
-
-            if (self.table.diagonal() == player).all():
-                return True
-
-            if (np.fliplr(self.table).diagonal() == player).all():
-                return True
-        return False
-
     def init_menu(self):
         button_width = 150
         button_height = 50
@@ -154,22 +138,29 @@ class TicTacToe:
             self.update_board()
             self.draw_board()
             self.draw_pieces()
-            if self.check_win(self.ai_player):
+            result = check_end(self.table)
+            if result == self.ai_player:
                 print('ai win')
                 break
-            if self.check_win(self.human_player):
+            elif result == self.human_player:
                 print('human win')
+                break
+            elif result == -1:
+                print('draw')
                 break
             if self.current_player == self.ai_player:
                 # do AI thinking
                 # self.table[0, 0] = self.ai_player
-                while True:
-                    r_i = randrange(0, self.table_size)
-                    r_j = randrange(0, self.table_size)
-                    if self.table[r_i, r_j] == 0:
-                        self.table[r_i, r_j] = self.ai_player
-                        self.current_player = self.human_player
-                        break
+                # while True:
+                #     r_i = randrange(0, self.table_size)
+                #     r_j = randrange(0, self.table_size)
+                #     if self.table[r_i, r_j] == 0:
+                #         self.table[r_i, r_j] = self.ai_player
+                #         self.current_player = self.human_player
+                #         break
+                val, self.table = self.alg.minimax(self.table, 0, False, -float('inf'), float('inf'))
+                print(val)
+                self.current_player = self.human_player
 
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -196,4 +187,5 @@ def main():
     obj.menu()
 
 
-main()
+if __name__ == '__main__':
+    main()
