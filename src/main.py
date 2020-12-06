@@ -1,6 +1,7 @@
 import pygame as pg
 import numpy as np
 from random import randrange
+from button import Button
 
 
 class TicTacToe:
@@ -8,15 +9,18 @@ class TicTacToe:
     def __init__(self, table_size=3):
         self.table_size = table_size
         self.table = np.zeros(shape=(table_size, table_size), dtype='int')
-        self.buttons = []
+        self.menu_buttons = []
         # self.table[0] = 1
         # self.table[-1] = 2
         pg.init()
-        self.screen = pg.display.set_mode((800, 600))
+        self.smallfont = pg.font.SysFont('Comic Sans MS', 35)
+        self.s_width = 800
+        self.s_height = 600
+        self.screen = pg.display.set_mode((self.s_width, self.s_height))
         self.clock = pg.time.Clock()
         self.tile_size = 100
         self.width, self.height = self.table_size * self.tile_size, self.table_size * self.tile_size
-        self.background = pg.Surface((self.width, self.height))
+        self.background = pg.Surface((self.s_width, self.s_height))
         self.offset = ((800 - self.width) / 2, (600 - self.height) / 2)
         self.current_player = 2
         self.human_player = 2
@@ -107,24 +111,45 @@ class TicTacToe:
             if (np.fliplr(self.table).diagonal() == player).all():
                 return True
         return False
+
+    def init_menu(self):
+        button_width = 150
+        button_height = 50
+        button_pos_x = self.s_width / 2 - button_width / 2
+        button_pos_y = self.s_height / 2.5 - button_height / 2
+        self.menu_buttons.append(Button(button_pos_x, button_pos_y, button_width, button_height, 'play_button', 'PLAY'))
+
     def draw_menu(self):
+        for button in self.menu_buttons:
+            pg.draw.rect(self.background, rect=((button.pos_x, button.pos_y), (button.width, button.height)),
+                         color='WHITE')
+            text = self.smallfont.render(button.text, True, (252, 3, 57))
+            self.background.blit(text, (button.pos_x + button.width / 4, button.pos_y))
 
     def menu(self):
+        self.init_menu()
         while True:
+            self.draw_menu()
             for event in pg.event.get():
                 if event.type == pg.QUIT:
-                    game_exit = True
+                    break
                 if event.type == pg.MOUSEBUTTONUP:
                     pos = pg.mouse.get_pos()
-                    pos = pos[0] - self.offset[0], pos[1] - self.offset[1]
+                    pos = pos[0], pos[1]
+                    for button in self.menu_buttons:
+                        if button.check_pressed(pos):
+                            if button.name == 'play_button':
+                                self.run()
+                                return
                     # click buttons
             self.screen.fill((60, 70, 90))
-            self.screen.blit(self.background, self.offset)
+            self.screen.blit(self.background, (0, 0))
             pg.display.flip()
             self.clock.tick(30)
 
     def run(self):
         game_exit = False
+        self.background = pg.Surface((self.width, self.height))
         while not game_exit:
             self.update_board()
             self.draw_board()
@@ -168,7 +193,7 @@ class TicTacToe:
 
 def main():
     obj = TicTacToe()
-    obj.run()
+    obj.menu()
 
 
 main()
