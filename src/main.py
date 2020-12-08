@@ -33,6 +33,7 @@ class TicTacToe:
         self.ai_player = 1
         self.gameover = False
         self.winner = 0
+        self.difficulty = 0
         self.board_tiles = []
         self.score = {1: 0, 2: 0}
         self.init_board()
@@ -122,6 +123,17 @@ class TicTacToe:
         button_pos_y = self.s_height / 2.5 - button_height / 2
         self.menu_buttons.append(Button(button_pos_x, button_pos_y, button_width, button_height, 'play_button', 'PLAY'))
 
+        button_width = 200
+        button_pos_x = self.s_width / 1.2 - button_width / 2
+
+        self.menu_buttons.append(Button(button_pos_x, button_pos_y, button_width, button_height, 'dif1_button', 'EASY'))
+        button_pos_y += button_height * 1.5
+        self.menu_buttons.append(
+            Button(button_pos_x, button_pos_y, button_width, button_height, 'dif2_button', 'NORMAL'))
+        button_pos_y += button_height * 1.5
+        self.menu_buttons.append(
+            Button(button_pos_x, button_pos_y, button_width, button_height, 'dif3_button', 'HARD'))
+
     def init_game_buttons(self):
         button_width = 150
         button_height = 50
@@ -131,11 +143,15 @@ class TicTacToe:
             Button(button_pos_x, button_pos_y, button_width, button_height, 'replay_button', 'REPLAY'))
 
     def draw_menu(self):
+        dif_buttons = {0: 'dif1_button', 1: 'dif2_button', 2: 'dif3_button'}
         for button in self.menu_buttons:
             pg.draw.rect(self.background, rect=((button.pos_x, button.pos_y), (button.width, button.height)),
                          color='WHITE')
             text = self.smallfont.render(button.text, True, (252, 3, 57))
-            self.background.blit(text, (button.pos_x + button.width / 4, button.pos_y))
+            self.background.blit(text, (button.pos_x + (button.width / 2 - text.get_width() / 2), button.pos_y))
+            if dif_buttons[self.difficulty] == button.name:
+                pg.draw.rect(self.background, rect=((button.pos_x, button.pos_y), (button.width, button.height)),
+                             color='GREEN', width=3)
 
     def menu(self):
         self.init_menu_buttons()
@@ -152,16 +168,36 @@ class TicTacToe:
                             if button.name == 'play_button':
                                 self.run()
                                 return
+                            if button.name == 'dif1_button':
+                                self.difficulty = 0
+                            elif button.name == 'dif2_button':
+                                self.difficulty = 1
+                            elif button.name == 'dif3_button':
+                                self.difficulty = 2
                     # click buttons
             self.screen.fill((60, 70, 90))
             self.screen.blit(self.background, (0, 0))
             pg.display.flip()
             self.clock.tick(30)
 
+    def easy_ai(self):
+        while True:
+            r_i = randrange(0, self.table_size)
+            r_j = randrange(0, self.table_size)
+            if self.table[r_i, r_j] == 0:
+                self.table[r_i, r_j] = self.ai_player
+                self.current_player = self.human_player
+                break
+
+    def hard_ai(self):
+        _, self.table = self.alg.minimax(self.table, 0, False, -float('inf'), float('inf'))
+        self.current_player = self.human_player
+
     def run(self):
         game_exit = False
         self.background = pg.Surface((self.width, self.height))
         self.init_game_buttons()
+        ai_dif_turn = 0
         while not game_exit:
             self.update_board()
             self.draw_board()
@@ -180,18 +216,16 @@ class TicTacToe:
                     self.gameover = True
             if self.current_player == self.ai_player and not self.gameover:
                 # do AI thinking
-                # self.table[0, 0] = self.ai_player
-                # while True:
-                #     r_i = randrange(0, self.table_size)
-                #     r_j = randrange(0, self.table_size)
-                #     if self.table[r_i, r_j] == 0:
-                #         self.table[r_i, r_j] = self.ai_player
-                #         self.current_player = self.human_player
-                #         break
-                val, self.table = self.alg.minimax(self.table, 0, False, -float('inf'), float('inf'))
-                print(val)
-                self.current_player = self.human_player
-
+                ai_dif_turn = (ai_dif_turn + 1) % 2
+                if self.difficulty == 0:
+                    self.easy_ai()
+                elif self.difficulty == 1:
+                    if ai_dif_turn == 0:
+                        self.easy_ai()
+                    else:
+                        self.hard_ai()
+                elif self.difficulty == 2:
+                    self.hard_ai()
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     game_exit = True
