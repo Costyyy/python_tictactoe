@@ -32,8 +32,9 @@ class TicTacToe:
         self.human_player = 2
         self.ai_player = 1
         self.gameover = False
+        self.winner = 0
         self.board_tiles = []
-        self.player_colors = {1: 'red', 2: 'green'}
+        self.score = {1: 0, 2: 0}
         self.init_board()
 
     def init_board(self):
@@ -57,13 +58,17 @@ class TicTacToe:
                 x, y = pos
                 rect = (x, y, self.tile_size, self.tile_size)
                 pg.draw.rect(self.background, 'WHITE', rect, width=1)
-
-        for button in self.game_buttons:
-            if button.name == 'replay_button' and self.gameover:
-                pg.draw.rect(self.button_surface, rect=((button.pos_x, button.pos_y), (button.width, button.height)),
-                             color='WHITE')
-                text = self.smallfont.render(button.text, True, (252, 3, 57))
-                self.button_surface.blit(text, (button.pos_x + button.width / 8, button.pos_y))
+        if self.gameover:
+            score_text = self.smallfont.render(f'H:{self.score[self.human_player]} - C:{self.score[self.ai_player]}',
+                                               True, (252, 3, 57))
+            self.button_surface.blit(score_text, (0, 0))
+            for button in self.game_buttons:
+                if button.name == 'replay_button':
+                    pg.draw.rect(self.button_surface,
+                                 rect=((button.pos_x, button.pos_y), (button.width, button.height)),
+                                 color='WHITE')
+                    text = self.smallfont.render(button.text, True, (252, 3, 57))
+                    self.button_surface.blit(text, (button.pos_x + button.width / 8, button.pos_y))
 
     def draw_pieces(self):
         for i in range(self.table_size):
@@ -162,15 +167,17 @@ class TicTacToe:
             self.draw_board()
             self.draw_pieces()
             result = check_end(self.table)
-            if result == self.ai_player:
-                print('ai win')
-                self.gameover = True
-            elif result == self.human_player:
-                print('human win')
-                self.gameover = True
-            elif result == -1:
-                print('draw')
-                self.gameover = True
+            if not self.gameover:
+                if result == self.ai_player:
+                    self.score[self.ai_player] += 1
+                    self.gameover = True
+                elif result == self.human_player:
+                    self.score[self.human_player] += 1
+                    self.gameover = True
+                elif result == -1:
+                    self.score[self.ai_player] += 1
+                    self.score[self.human_player] += 1
+                    self.gameover = True
             if self.current_player == self.ai_player and not self.gameover:
                 # do AI thinking
                 # self.table[0, 0] = self.ai_player
