@@ -59,10 +59,20 @@ class TicTacToe:
                 x, y = pos
                 rect = (x, y, self.tile_size, self.tile_size)
                 pg.draw.rect(self.background, 'WHITE', rect, width=1)
+
+    def draw_game_ui(self):
         if self.gameover:
             score_text = self.smallfont.render(f'H:{self.score[self.human_player]} - C:{self.score[self.ai_player]}',
                                                True, (252, 3, 57))
             self.button_surface.blit(score_text, (0, 0))
+            if self.winner == self.human_player:
+                win_text = 'Player Wins'
+            elif self.winner == self.ai_player:
+                win_text = 'Computer Wins'
+            else:
+                win_text = 'Draw'
+            win_text = self.smallfont.render(win_text, True, (252, 3, 57))
+            self.background.blit(win_text, (self.width / 2 - win_text.get_width() / 2, self.height / 2))
             for button in self.game_buttons:
                 if button.name == 'replay_button':
                     pg.draw.rect(self.button_surface,
@@ -202,18 +212,25 @@ class TicTacToe:
             self.update_board()
             self.draw_board()
             self.draw_pieces()
+            self.draw_game_ui()
             result = check_end(self.table)
             if not self.gameover:
                 if result == self.ai_player:
+                    self.winner = self.ai_player
                     self.score[self.ai_player] += 1
                     self.gameover = True
+                    self.current_player = 2
                 elif result == self.human_player:
+                    self.winner = self.human_player
                     self.score[self.human_player] += 1
                     self.gameover = True
+                    self.current_player = 2
                 elif result == -1:
+                    self.winner = 0
                     self.score[self.ai_player] += 1
                     self.score[self.human_player] += 1
                     self.gameover = True
+                    self.current_player = 2
             if self.current_player == self.ai_player and not self.gameover:
                 # do AI thinking
                 ai_dif_turn = (ai_dif_turn + 1) % 2
